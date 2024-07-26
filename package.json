@@ -1,0 +1,7 @@
+{
+  "name": "emu",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Elton <Liao.elton@gmail.com>",
+  "license": "MIT"
+}

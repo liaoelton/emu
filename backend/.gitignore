@@ -1,0 +1,60 @@
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# Dependency directories
+bower_components/
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Production build outputs
+/dist
+
+# Typescript
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Mac system files
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Optional Vagrant
+.vagrant/
+
+# Local development keys
+*.pem
+
+# Temporary files
+tmp/
+temp/
+
+# Build files
+*.bak
+*.cache
+*.tmp
+*.swp
+*.swo
