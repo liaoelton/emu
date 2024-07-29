@@ -1,4 +1,5 @@
 import { Block } from "@/types/Block";
+import { createSortHandler, SortConfig, sortData } from "@/utils/sorting";
 import { Button, Flex, Table, Text } from "@mantine/core";
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -8,9 +9,7 @@ const RecentBlockList = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [lastSlot, setLastSlot] = useState<number | null>(null);
-    const [sortConfig, setSortConfig] = useState<{ key: keyof Block; direction: "ascending" | "descending" } | null>(
-        null
-    );
+    const [sortConfig, setSortConfig] = useState<SortConfig<Block> | null>(null);
 
     const fetchBlocks = useCallback(async (endSlot: number | null) => {
         setLoading(true);
@@ -56,31 +55,8 @@ const RecentBlockList = () => {
         if (blocks.length === 0) fetchInitialBlocks();
     }, [fetchBlocks]);
 
-    const sortedBlocks = useMemo(() => {
-        if (sortConfig === null) return blocks;
-
-        return [...blocks].sort((a, b) => {
-            const aValue = a[sortConfig.key] ?? 0;
-            const bValue = b[sortConfig.key] ?? 0;
-
-            if (aValue < bValue) {
-                return sortConfig.direction === "ascending" ? -1 : 1;
-            }
-            if (aValue > bValue) {
-                return sortConfig.direction === "ascending" ? 1 : -1;
-            }
-            return a.slot - b.slot;
-        });
-    }, [blocks, sortConfig]);
-
-    const requestSort = (key: keyof Block) => {
-        setSortConfig((prevSortConfig) => {
-            if (prevSortConfig && prevSortConfig.key === key && prevSortConfig.direction === "ascending") {
-                return { key, direction: "descending" };
-            }
-            return { key, direction: "ascending" };
-        });
-    };
+    const sortedBlocks = useMemo(() => sortData(blocks, sortConfig), [blocks, sortConfig]);
+    const requestSort = createSortHandler(setSortConfig);
 
     return (
         <Flex w="100%" direction="column" gap="md">
