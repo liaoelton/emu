@@ -16,7 +16,7 @@ app.use(cors());
 
 app.get("/slot", async (req, res) => {
     try {
-        const currentSlot = await connection.getSlot();
+        const currentSlot = await connection.getSlot({ commitment: "finalized" });
         res.json({ slot: currentSlot });
     } catch (error: any) {
         res.status(500).json({ error: error.toString() });
@@ -57,13 +57,18 @@ app.get("/blocks", async (req, res) => {
         const blocks = await connection.getBlocks(startSlot, endSlot);
 
         const detailedBlocks = await Promise.all(
-            blocks.slice(-blockLimit).map(async (blockSlot) => {
-                const block = await findOrCreateBlockBySlot(connection, blockSlot);
-                return block;
+            blocks.slice(-(blockLimit + 1)).map(async (blockSlot) => {
+                try {
+                    const block = await findOrCreateBlockBySlot(connection, blockSlot);
+                    return block;
+                } catch (error) {
+                    console.error(`Failed to fetch or save block info for slot ${blockSlot}:`, error);
+                    return null;
+                }
             })
-        );
+        ).then((results) => results.filter((block) => block !== null));
 
-        const formattedBlocks = detailedBlocks.map(formatBlockResponse);
+        const formattedBlocks = detailedBlocks.slice(-blockLimit).map(formatBlockResponse);
         res.json(formattedBlocks);
     } catch (error: any) {
         console.error("Failed to fetch blocks:", error);
@@ -89,7 +94,7 @@ app.get("/tx/:signature", async (req, res) => {
 
 app.get("/txs", async (req, res) => {
     try {
-        const { block, page = 1, limit = 5 } = req.query;
+        const { block, page = 1, limit = 10 } = req.query;
         const blockSlot = Number(block);
         const pageNumber = Number(page);
         const limitNumber = Number(limit);
