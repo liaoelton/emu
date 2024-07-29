@@ -16,7 +16,7 @@ app.use(cors());
 
 app.get("/slot", async (req, res) => {
     try {
-        const currentSlot = await connection.getSlot();
+        const currentSlot = await connection.getSlot({ commitment: "finalized" });
         res.json({ slot: currentSlot });
     } catch (error: any) {
         res.status(500).json({ error: error.toString() });

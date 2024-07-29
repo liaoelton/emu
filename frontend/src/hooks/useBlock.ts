@@ -27,8 +27,8 @@ export const useBlock = (slot: number | null) => {
 
                 return response.data;
             } catch (error: any) {
-                console.error(error);
-                if (error.message.includes("failed to get confirmed block: Block not available for slot")) {
+                console.log(error.response.data.error);
+                if (error.response.data.error.includes("failed to get confirmed block: Block not available for slot")) {
                     attempts++;
                     if (attempts < maxRetries) {
                         console.log(`Retrying... (${attempts}/${maxRetries})`);

@@ -11,6 +11,7 @@ const RecentBlockList = () => {
     const [lastSlot, setLastSlot] = useState<number | null>(null);
     const [sortConfig, setSortConfig] = useState<SortConfig<Block> | null>(null);
     const [slot, setSlot] = useState<number | null>(null);
+
     const fetchBlocks = useCallback(async (endSlot: number | null) => {
         setLoading(true);
         if (endSlot === null) return;
@@ -41,19 +42,20 @@ const RecentBlockList = () => {
         }
     }, [blocks]);
 
+    const fetchInitialBlocks = async () => {
+        try {
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/slot`, {
+                headers: { "Content-Type": "application/json" },
+            });
+            const slotData: number = response.data.slot;
+            fetchBlocks(slotData);
+            setSlot(slotData);
+        } catch (error: any) {
+            console.error("Error fetching initial blocks:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchInitialBlocks = async () => {
-            try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/slot`, {
-                    headers: { "Content-Type": "application/json" },
-                });
-                const slotData: number = response.data.slot;
-                fetchBlocks(slotData);
-                setSlot(slotData);
-            } catch (error: any) {
-                console.error("Error fetching initial blocks:", error);
-            }
-        };
         if (blocks.length === 0 && slot == null) fetchInitialBlocks();
     }, []);
 
