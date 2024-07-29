@@ -87,6 +87,52 @@ app.get("/tx/:signature", async (req, res) => {
     }
 });
 
+app.get("/txs", async (req, res) => {
+    try {
+        const { block, page = 1, limit = 5 } = req.query;
+        const blockSlot = Number(block);
+        const pageNumber = Number(page);
+        const limitNumber = Number(limit);
+
+        if (isNaN(blockSlot) || isNaN(pageNumber) || isNaN(limitNumber) || pageNumber <= 0 || limitNumber <= 0) {
+            return res.status(400).json({ error: "Block slot, page, and limit must be valid positive numbers" });
+        }
+
+        const blockInfo = await findOrCreateBlockBySlot(connection, blockSlot);
+        const txs = blockInfo?.tx_sigs || [];
+        const totalTxs = txs.length;
+        const totalPages = Math.ceil(totalTxs / limitNumber);
+
+        if (pageNumber > totalPages) {
+            return res.status(400).json({ error: "Page number exceeds total pages" });
+        }
+
+        const txsPaged = txs.slice((pageNumber - 1) * limitNumber, pageNumber * limitNumber);
+
+        const transactions = await Promise.all(
+            txsPaged.map(async (txSig: any) => {
+                const tx = await findOrCreateTransactionBySignature(connection, txSig[0]);
+                return tx;
+            })
+        );
+
+        const meta = {
+            total: totalTxs,
+            page: pageNumber,
+            limit: limitNumber,
+            totalPages: totalPages,
+        };
+
+        res.json({
+            transactions,
+            meta,
+        });
+    } catch (error: any) {
+        console.error("Failed to fetch or save transaction info:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get("/search/:query", async (req, res) => {
     const { query } = req.params;
     const slot = parseInt(query, 10);
