@@ -16,15 +16,30 @@ export const useBlock = (slot: number | null) => {
     const [error, setError] = useState<string | null>(null);
     const getBlock = async (slot: number | null) => {
         if (!slot) return null;
-        try {
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/block/${slot}`, {
-                headers: { "Content-Type": "application/json" },
-            });
+        const maxRetries = 3;
+        let attempts = 0;
 
-            return response.data;
-        } catch (error: any) {
-            console.error(error);
-            throw new Error("Failed to fetch block.");
+        while (attempts < maxRetries) {
+            try {
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/block/${slot}`, {
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                return response.data;
+            } catch (error: any) {
+                console.error(error);
+                if (error.message.includes("failed to get confirmed block: Block not available for slot")) {
+                    attempts++;
+                    if (attempts < maxRetries) {
+                        console.log(`Retrying... (${attempts}/${maxRetries})`);
+                        await new Promise((res) => setTimeout(res, 1000));
+                    } else {
+                        throw new Error("Failed to fetch block after multiple attempts.");
+                    }
+                } else {
+                    throw new Error("Failed to fetch block.");
+                }
+            }
         }
     };
 
