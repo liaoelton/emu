@@ -1,96 +1,85 @@
+import { Block } from "@/types/Block";
 import { Button, Flex, Table, Text } from "@mantine/core";
 import axios from "axios";
-import { useEffect, useState } from "react";
-
-interface Block {
-    blockHeight: string;
-    blockTime: string;
-    blockhash: string;
-    slot: number;
-}
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const RecentBlockList = () => {
     const [blocks, setBlocks] = useState<Block[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [lastSlot, setLastSlot] = useState<number | null>(null);
-    const [sortConfig, setSortConfig] = useState<{ key: string; direction: string } | null>(null);
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Block; direction: "ascending" | "descending" } | null>(
+        null
+    );
 
-    const fetchBlocks = async (endSlot: number | null) => {
+    const fetchBlocks = useCallback(async (endSlot: number | null) => {
         setLoading(true);
+        if (endSlot === null) return;
         try {
+            setError(null);
             const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/blocks?end=${endSlot}`);
-            const newBlocks = response.data;
+            const newBlocks: Block[] = response.data;
             setBlocks((prevBlocks) => {
                 const combinedBlocks = [...prevBlocks, ...newBlocks];
                 const uniqueBlocks = Array.from(new Set(combinedBlocks.map((block) => block.slot))).map((slot) =>
                     combinedBlocks.find((block) => block.slot === slot)
-                );
+                ) as Block[];
                 uniqueBlocks.sort((a, b) => b.slot - a.slot);
                 return uniqueBlocks;
             });
-            if (newBlocks.length > 0) {
-                setLastSlot(newBlocks[newBlocks.length - 1].slot);
-            }
-            setLoading(false);
         } catch (err: any) {
             setError(err.message);
+        } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (blocks.length > 0) {
+            const minSlot = Math.min(...blocks.map((block) => block.slot));
+            setLastSlot(minSlot - 1);
+        }
+    }, [blocks]);
 
     useEffect(() => {
         const fetchInitialBlocks = async () => {
             try {
-                const slotData = await (async () => {
-                    try {
-                        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/slot`, {
-                            headers: { "Content-Type": "application/json" },
-                        });
-
-                        return response.data.slot;
-                    } catch (error: any) {
-                        console.error(error);
-                        throw new Error("Failed to fetch slot.");
-                    }
-                })();
-
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/slot`, {
+                    headers: { "Content-Type": "application/json" },
+                });
+                const slotData: number = response.data.slot;
                 fetchBlocks(slotData);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Error fetching initial blocks:", error);
             }
         };
+        if (blocks.length === 0) fetchInitialBlocks();
+    }, [fetchBlocks]);
 
-        fetchInitialBlocks();
-    }, []);
+    const sortedBlocks = useMemo(() => {
+        if (sortConfig === null) return blocks;
 
-    let sortedBlocks = [...blocks];
-    if (sortConfig !== null) {
-        sortedBlocks.sort((a, b) => {
-            const key = sortConfig.key as keyof Block;
-            if (a[key] < b[key]) {
+        return [...blocks].sort((a, b) => {
+            const aValue = a[sortConfig.key] ?? 0;
+            const bValue = b[sortConfig.key] ?? 0;
+
+            if (aValue < bValue) {
                 return sortConfig.direction === "ascending" ? -1 : 1;
             }
-            if (a[key] > b[key]) {
+            if (aValue > bValue) {
                 return sortConfig.direction === "ascending" ? 1 : -1;
             }
-            // If slots are the same, sort by slot
-            if (a.slot < b.slot) {
-                return sortConfig.direction === "ascending" ? -1 : 1;
-            }
-            if (a.slot > b.slot) {
-                return sortConfig.direction === "ascending" ? 1 : -1;
-            }
-            return 0;
+            return a.slot - b.slot;
         });
-    }
+    }, [blocks, sortConfig]);
 
-    const requestSort = (key: string) => {
-        let direction = "ascending";
-        if (sortConfig && sortConfig.key === key && sortConfig.direction === "ascending") {
-            direction = "descending";
-        }
-        setSortConfig({ key, direction });
+    const requestSort = (key: keyof Block) => {
+        setSortConfig((prevSortConfig) => {
+            if (prevSortConfig && prevSortConfig.key === key && prevSortConfig.direction === "ascending") {
+                return { key, direction: "descending" };
+            }
+            return { key, direction: "ascending" };
+        });
     };
 
     return (
@@ -120,9 +109,10 @@ const RecentBlockList = () => {
                     ))}
                 </Table.Tbody>
             </Table>
-            <Button onClick={() => fetchBlocks(lastSlot ? lastSlot - 1 : null)} disabled={loading} loading={loading}>
+            <Button onClick={() => fetchBlocks(lastSlot)} disabled={loading} loading={loading}>
                 Load More
             </Button>
+            {error && <Text>{error}</Text>}
         </Flex>
     );
 };
