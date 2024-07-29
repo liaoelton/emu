@@ -1,11 +1,13 @@
-import { Connection, clusterApiUrl } from "@solana/web3.js";
+import { Connection } from "@solana/web3.js";
 import cors from "cors";
 import "dotenv/config";
 import express from "express";
 import { findOrCreateBlockBySlot } from "./services/blockService";
+import { findOrCreateTransactionBySignature } from "./services/txService";
 import { connect_to_db } from "./utils/db";
 
-const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+const connection = new Connection(`https://solana-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
+
 const app = express();
 const port = 3001;
 
@@ -78,6 +80,22 @@ app.get("/blocks", async (req, res) => {
     } catch (error: any) {
         console.error("Failed to fetch blocks:", error);
         res.status(500).send(error.toString());
+    }
+});
+
+app.get("/tx/:signature", async (req, res) => {
+    try {
+        const signature = req.params.signature;
+        const isBase58 = /^[1-9A-HJ-NP-Za-km-z]+$/.test(signature);
+        if (!isBase58) {
+            res.status(400).send("Signature must be in base 58");
+            return;
+        }
+        const transaction = await findOrCreateTransactionBySignature(connection, signature);
+        res.json(transaction);
+    } catch (error: any) {
+        console.error("Failed to fetch or save transaction info:", error);
+        res.status(500).json({ error: error.toString() });
     }
 });
 
