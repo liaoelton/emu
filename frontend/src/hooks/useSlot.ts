@@ -25,6 +25,7 @@ export const useSlot = () => {
                 const slotData = await getSlot();
                 setSlot(slotData);
                 setLoading(false);
+                setError(null);
             } catch (err: any) {
                 setError(err.message);
                 setLoading(false);
