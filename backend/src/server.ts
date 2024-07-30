@@ -1,6 +1,7 @@
 import cors from "cors";
 import "dotenv/config";
 import express from "express";
+import { errorHandler } from "./middlewares/errorHandler";
 import blockRoutes from "./routes/blockRoutes";
 import searchRoutes from "./routes/searchRoutes";
 import slotRoutes from "./routes/slotRoutes";
@@ -17,6 +18,8 @@ app.use("/slot", slotRoutes);
 app.use("/blocks", blockRoutes);
 app.use("/txs", transactionRoutes);
 app.use("/search", searchRoutes);
+
+app.use(errorHandler);
 
 connect_to_db().then(() =>
     app.listen(port, () => {

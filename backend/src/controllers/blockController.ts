@@ -1,23 +1,23 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { findOrCreateBlockBySlot, formatBlockResponse } from "../services/blockService";
+import { ValidationError } from "../utils/errors";
 import { connection } from "../utils/solanaConnection";
 
-export const getBlock = async (req: Request, res: Response) => {
+export const getBlock = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const slot = parseInt(req.params.slot, 10);
         if (isNaN(slot)) {
-            res.status(400).send("Slot must be a number");
-            return;
+            throw new ValidationError("Slot must be a number");
         }
         const block = await findOrCreateBlockBySlot(connection, slot);
         res.json(block);
     } catch (error: any) {
         console.error("Failed to fetch or save block info:", error);
-        res.status(500).json({ error: error.toString() });
+        next(error);
     }
 };
 
-export const getBlocks = async (req: Request, res: Response) => {
+export const getBlocks = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { end, limit = 5 } = req.query;
         const endSlot = parseInt(end as string, 10);
@@ -25,11 +25,11 @@ export const getBlocks = async (req: Request, res: Response) => {
         const threshold = 5; // For non-contiguous slots
 
         if (isNaN(endSlot)) {
-            return res.status(400).json({ error: "End slot must be a number" });
+            throw new ValidationError("End slot must be a number");
         }
 
         if (isNaN(blockLimit) || blockLimit <= 0) {
-            return res.status(400).json({ error: "Limit must be a positive number" });
+            throw new ValidationError("Limit must be a positive number");
         }
 
         const startSlot = endSlot - blockLimit - threshold;
@@ -51,6 +51,6 @@ export const getBlocks = async (req: Request, res: Response) => {
         res.json(formattedBlocks);
     } catch (error: any) {
         console.error("Failed to fetch blocks:", error);
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 };
