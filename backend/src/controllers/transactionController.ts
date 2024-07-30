@@ -1,25 +1,25 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { findOrCreateBlockBySlot } from "../services/blockService";
 import { findOrCreateTransactionBySignature } from "../services/txService";
+import { ValidationError } from "../utils/errors";
 import { connection } from "../utils/solanaConnection";
 
-export const getTransaction = async (req: Request, res: Response) => {
+export const getTransaction = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const signature = req.params.signature;
         const isBase58 = /^[1-9A-HJ-NP-Za-km-z]+$/.test(signature);
         if (!isBase58) {
-            res.status(400).send("Signature must be in base 58");
-            return;
+            throw new ValidationError("Signature must be in base 58");
         }
         const transaction = await findOrCreateTransactionBySignature(connection, signature);
         res.json(transaction);
     } catch (error: any) {
         console.error("Failed to fetch or save transaction info:", error);
-        res.status(500).json({ error: error.toString() });
+        next(error);
     }
 };
 
-export const getTransactions = async (req: Request, res: Response) => {
+export const getTransactions = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { block, page = 1, limit = 10 } = req.query;
         const blockSlot = Number(block);
@@ -27,7 +27,7 @@ export const getTransactions = async (req: Request, res: Response) => {
         const limitNumber = Number(limit);
 
         if (isNaN(blockSlot) || isNaN(pageNumber) || isNaN(limitNumber) || pageNumber <= 0 || limitNumber <= 0) {
-            return res.status(400).json({ error: "Block slot, page, and limit must be valid positive numbers" });
+            throw new ValidationError("Block slot, page, and limit must be valid positive numbers");
         }
 
         const blockInfo = await findOrCreateBlockBySlot(connection, blockSlot);
@@ -36,7 +36,7 @@ export const getTransactions = async (req: Request, res: Response) => {
         const totalPages = Math.ceil(totalTxs / limitNumber);
 
         if (pageNumber > totalPages) {
-            return res.status(400).json({ error: "Page number exceeds total pages" });
+            throw new ValidationError("Page number exceeds total pages");
         }
 
         const txsPaged = txs.slice((pageNumber - 1) * limitNumber, pageNumber * limitNumber);
@@ -61,6 +61,6 @@ export const getTransactions = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         console.error("Failed to fetch or save transaction info:", error);
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 };

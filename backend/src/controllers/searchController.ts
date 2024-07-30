@@ -1,21 +1,22 @@
 import { PublicKey } from "@solana/web3.js";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { findOrCreateBlockBySlot } from "../services/blockService";
 import { findOrCreateTransactionBySignature } from "../services/txService";
+import { NotFoundError, ValidationError } from "../utils/errors";
 import { connection } from "../utils/solanaConnection";
 
-export const search = async (req: Request, res: Response) => {
+export const search = async (req: Request, res: Response, next: NextFunction) => {
     const { query } = req.params;
     const slot = parseInt(query, 10);
 
     if (/^\d+$/.test(query)) {
         try {
-            // TODO: Handle uncomfirmed blocks
+            // TODO: Handle unconfirmed blocks
             const blockInfo = await findOrCreateBlockBySlot(connection, slot);
             res.json({ type: "block", data: blockInfo });
         } catch (error: any) {
             console.error("Error fetching block:", error);
-            res.status(500).json({ error: error.message });
+            next(error);
         }
         return;
     }
@@ -27,7 +28,7 @@ export const search = async (req: Request, res: Response) => {
                 res.json({ type: "transaction", data: transaction });
                 return;
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching transaction:", error);
         }
 
@@ -38,13 +39,13 @@ export const search = async (req: Request, res: Response) => {
                 res.json({ type: "address", data: addressInfo });
                 return;
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching address info:", error);
         }
 
-        res.status(404).json({ type: "error", error: "Block, transaction, or address not found" });
+        next(new NotFoundError("Block, transaction, or address not found"));
         return;
     }
 
-    res.status(400).json({ error: "Query format not recognized as a slot or base58 encoded string" });
+    next(new ValidationError("Query format not recognized as a slot or base58 encoded string"));
 };
