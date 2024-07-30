@@ -1,4 +1,5 @@
 import TxInfo from "@/components/tx/TxInfo";
+import TxInstructions from "@/components/tx/TxInstructions";
 import { Transaction } from "@/types/Transaction";
 import { parseTransaction } from "@/utils/parsing";
 import { Flex, Grid, Text } from "@mantine/core";
@@ -12,6 +13,79 @@ const Tx = () => {
     const [transaction, setTransaction] = useState<Transaction | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [ixs, setIxs] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchDecodedData = async () => {
+            if (!transaction) return;
+            try {
+                const accountKeys = transaction.transaction.message.accountKeys;
+                let ixIndex = 0;
+                let ixs: any[] = [];
+                for (const instruction of transaction.transaction.message.instructions) {
+                    const parsedResult = await parseTransaction(
+                        accountKeys[instruction.programIdIndex],
+                        instruction.data
+                    );
+                    let SFMIdlItem = null;
+                    let decodedData = null;
+                    if (parsedResult) {
+                        SFMIdlItem = parsedResult.SFMIdlItem;
+                        decodedData = parsedResult.decodedData;
+                    }
+                    decodedData = {
+                        ...decodedData,
+                        index: ixIndex,
+                        accounts: instruction.accounts.map((accountIndex: number) => accountKeys[accountIndex]),
+                        data: decodedData?.data,
+                        name: decodedData?.name,
+                        idl_name: SFMIdlItem?.idl.name,
+                        idl_program_id: SFMIdlItem?.programId,
+                    } as any;
+
+                    if (transaction.meta.innerInstructions.map((inner: any) => inner.index).includes(ixIndex)) {
+                        let inner_ixs: any[] = [];
+                        for (const inner of transaction.meta.innerInstructions) {
+                            for (const inner_ix of inner.instructions) {
+                                const innerParsedResult = await parseTransaction(
+                                    accountKeys[inner_ix.programIdIndex],
+                                    inner_ix.data
+                                );
+                                let innerDecodedData = null;
+                                let innerSFMIdlItem = null;
+                                if (innerParsedResult) {
+                                    innerDecodedData = innerParsedResult.decodedData;
+                                    innerSFMIdlItem = innerParsedResult.SFMIdlItem;
+                                    inner_ixs.push({
+                                        ...innerDecodedData,
+                                        idl_name: innerSFMIdlItem?.idl.name,
+                                        idl_program_id: innerSFMIdlItem?.programId,
+                                        accounts: inner_ix?.accounts.map(
+                                            (accountIndex: number) => accountKeys[accountIndex]
+                                        ),
+                                        data: innerDecodedData?.data,
+                                        name: innerDecodedData?.name,
+                                        innerSFMIdlItem,
+                                    });
+                                }
+                            }
+                        }
+                        decodedData = {
+                            ...decodedData,
+                            inner: inner_ixs,
+                        } as any;
+                    }
+                    ixs.push(decodedData);
+                    ixIndex++;
+                }
+                setIxs(ixs);
+            } catch (error) {
+                console.error("Failed to parse transaction:", error);
+            }
+        };
+
+        fetchDecodedData();
+    }, [transaction]);
 
     useEffect(() => {
         if (signature) {
@@ -56,6 +130,7 @@ const Tx = () => {
                 {transaction && (
                     <>
                         <TxInfo signature={signature} transaction={transaction} />
+                        <TxInstructions ixs={ixs} />
                     </>
                 )}
             </Grid>
