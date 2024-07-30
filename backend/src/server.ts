@@ -1,12 +1,11 @@
-import { Connection, PublicKey } from "@solana/web3.js";
 import cors from "cors";
 import "dotenv/config";
 import express from "express";
-import { findOrCreateBlockBySlot, formatBlockResponse } from "./services/blockService";
-import { findOrCreateTransactionBySignature } from "./services/txService";
+import blockRoutes from "./routes/blockRoutes";
+import searchRoutes from "./routes/searchRoutes";
+import slotRoutes from "./routes/slotRoutes";
+import transactionRoutes from "./routes/transactionRoutes";
 import { connect_to_db } from "./utils/db";
-
-const connection = new Connection(`https://solana-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
 
 const app = express();
 const port = 3001;
@@ -14,174 +13,10 @@ const port = 3001;
 app.use(express.json());
 app.use(cors());
 
-app.get("/slot", async (req, res) => {
-    try {
-        const currentSlot = await connection.getSlot({ commitment: "finalized" });
-        res.json({ slot: currentSlot });
-    } catch (error: any) {
-        res.status(500).json({ error: error.toString() });
-    }
-});
-
-app.get("/block/:slot", async (req, res) => {
-    try {
-        const slot = parseInt(req.params.slot, 10);
-        if (isNaN(slot)) {
-            res.status(400).send("Slot must be a number");
-            return;
-        }
-        const block = await findOrCreateBlockBySlot(connection, slot);
-        res.json(block);
-    } catch (error: any) {
-        console.error("Failed to fetch or save block info:", error);
-        res.status(500).json({ error: error.toString() });
-    }
-});
-
-app.get("/blocks", async (req, res) => {
-    try {
-        const { end, limit = 5 } = req.query;
-        const endSlot = parseInt(end as string, 10);
-        const blockLimit = parseInt(limit as string, 10);
-        const threshold = 5; // For non-contiguous slots
-
-        if (isNaN(endSlot)) {
-            return res.status(400).json({ error: "End slot must be a number" });
-        }
-
-        if (isNaN(blockLimit) || blockLimit <= 0) {
-            return res.status(400).json({ error: "Limit must be a positive number" });
-        }
-
-        const startSlot = endSlot - blockLimit - threshold;
-        const blocks = await connection.getBlocks(startSlot, endSlot);
-
-        const detailedBlocks = await Promise.all(
-            blocks.slice(-(blockLimit + 1)).map(async (blockSlot) => {
-                try {
-                    const block = await findOrCreateBlockBySlot(connection, blockSlot);
-                    return block;
-                } catch (error) {
-                    console.error(`Failed to fetch or save block info for slot ${blockSlot}:`, error);
-                    return null;
-                }
-            })
-        ).then((results) => results.filter((block) => block !== null));
-
-        const formattedBlocks = detailedBlocks.slice(-blockLimit).map(formatBlockResponse);
-        res.json(formattedBlocks);
-    } catch (error: any) {
-        console.error("Failed to fetch blocks:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get("/tx/:signature", async (req, res) => {
-    try {
-        const signature = req.params.signature;
-        const isBase58 = /^[1-9A-HJ-NP-Za-km-z]+$/.test(signature);
-        if (!isBase58) {
-            res.status(400).send("Signature must be in base 58");
-            return;
-        }
-        const transaction = await findOrCreateTransactionBySignature(connection, signature);
-        res.json(transaction);
-    } catch (error: any) {
-        console.error("Failed to fetch or save transaction info:", error);
-        res.status(500).json({ error: error.toString() });
-    }
-});
-
-app.get("/txs", async (req, res) => {
-    try {
-        const { block, page = 1, limit = 10 } = req.query;
-        const blockSlot = Number(block);
-        const pageNumber = Number(page);
-        const limitNumber = Number(limit);
-
-        if (isNaN(blockSlot) || isNaN(pageNumber) || isNaN(limitNumber) || pageNumber <= 0 || limitNumber <= 0) {
-            return res.status(400).json({ error: "Block slot, page, and limit must be valid positive numbers" });
-        }
-
-        const blockInfo = await findOrCreateBlockBySlot(connection, blockSlot);
-        const txs = blockInfo?.tx_sigs || [];
-        const totalTxs = txs.length;
-        const totalPages = Math.ceil(totalTxs / limitNumber);
-
-        if (pageNumber > totalPages) {
-            return res.status(400).json({ error: "Page number exceeds total pages" });
-        }
-
-        const txsPaged = txs.slice((pageNumber - 1) * limitNumber, pageNumber * limitNumber);
-
-        const transactions = await Promise.all(
-            txsPaged.map(async (txSig: any) => {
-                const tx = await findOrCreateTransactionBySignature(connection, txSig[0]);
-                return tx;
-            })
-        );
-
-        const meta = {
-            total: totalTxs,
-            page: pageNumber,
-            limit: limitNumber,
-            totalPages: totalPages,
-        };
-
-        res.json({
-            transactions,
-            meta,
-        });
-    } catch (error: any) {
-        console.error("Failed to fetch or save transaction info:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get("/search/:query", async (req, res) => {
-    const { query } = req.params;
-    const slot = parseInt(query, 10);
-
-    if (/^\d+$/.test(query)) {
-        try {
-            // TODO: Handle uncomfirmed blocks
-            const blockInfo = await findOrCreateBlockBySlot(connection, slot);
-            res.json({ type: "block", data: blockInfo });
-        } catch (error: any) {
-            console.error("Error fetching block:", error);
-            res.status(500).json({ error: error.message });
-        }
-        return;
-    }
-    // Check if it's base58 encoded (signature, account, or program)
-    if (/^[1-9A-HJ-NP-Za-km-z]+$/.test(query)) {
-        try {
-            const transaction = await findOrCreateTransactionBySignature(connection, query);
-            if (transaction) {
-                res.json({ type: "transaction", data: transaction });
-                return;
-            }
-        } catch (error) {
-            console.error("Error fetching transaction:", error);
-        }
-
-        try {
-            // TODO: Handle unconstructed accounts
-            const addressInfo = await connection.getAccountInfo(new PublicKey(query));
-            if (addressInfo) {
-                res.json({ type: "address", data: addressInfo });
-                return;
-            }
-        } catch (error) {
-            console.error("Error fetching address info:", error);
-        }
-
-        res.status(404).json({ type: "error", error: "Block, transaction, or address not found" });
-        return;
-    }
-
-    res.status(400).json({ error: "Query format not recognized as a slot or base58 encoded string" });
-});
+app.use("/slot", slotRoutes);
+app.use("/blocks", blockRoutes);
+app.use("/txs", transactionRoutes);
+app.use("/search", searchRoutes);
 
 connect_to_db().then(() =>
     app.listen(port, () => {
