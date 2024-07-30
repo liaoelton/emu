@@ -25,6 +25,7 @@ interface ITransaction extends Document {
                 numReadonlyUnsignedAccounts: number;
                 numRequiredSignatures: number;
             };
+            accountKeys: string[];
             recentBlockhash: string;
             staticAccountKeys: any[];
             compiledInstructions: any[];
@@ -61,6 +62,7 @@ const transactionSchema = new Schema<ITransaction>({
                 numReadonlyUnsignedAccounts: { type: Number, required: true },
                 numRequiredSignatures: { type: Number, required: true },
             },
+            accountKeys: { type: [String], required: true },
             recentBlockhash: { type: String, required: true },
             staticAccountKeys: { type: [Schema.Types.Mixed], required: true },
             compiledInstructions: { type: [Schema.Types.Mixed], required: true },
