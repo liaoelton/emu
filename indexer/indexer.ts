@@ -3,9 +3,9 @@ import "dotenv/config";
 import mongoose from "mongoose";
 
 const blockHashSchema = new mongoose.Schema({
-    slot: Number,
-    blockhash: String,
-    parentSlot: Number,
+    slot: { type: Number, required: true, unique: true },
+    blockhash: { type: String, required: true, unique: true },
+    parentSlot: { type: Number, required: true, unique: true },
 });
 
 const BlockHashModel = mongoose.model("BlockHash", blockHashSchema);

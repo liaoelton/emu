@@ -3,15 +3,20 @@ import { useState } from "react";
 
 const NavBar = () => {
     const [searchQuery, setSearchQuery] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
     const handleSearch = async () => {
         try {
+            setLoading(true);
             const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/search/${searchQuery}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch search results");
             }
             const data = await response.json();
             if (data.type === "block") {
-                window.location.href = `/block/${searchQuery}`;
+                const slot = data.data.slot;
+                window.location.href = `/block/${slot}`;
             } else if (data.type === "transaction") {
                 window.location.href = `/tx/${searchQuery}`;
             } else if (data.type === "address") {
@@ -19,7 +24,10 @@ const NavBar = () => {
             } else {
                 console.error("Unknown data type returned from search");
             }
-        } catch (error) {
+            setLoading(false);
+        } catch (error: any) {
+            setLoading(false);
+            setError(error.message);
             console.error("Error during search:", error);
         }
     };
@@ -33,7 +41,9 @@ const NavBar = () => {
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.currentTarget.value)}
                 />
-                <Button onClick={handleSearch}>Go</Button>
+                <Button onClick={handleSearch} loading={loading}>
+                    Go
+                </Button>
             </Group>
         </Flex>
     );
