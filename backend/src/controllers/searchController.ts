@@ -4,6 +4,7 @@ import { findOrCreateBlockBySlot } from "../services/blockService";
 import { findOrCreateTransactionBySignature } from "../services/txService";
 import { NotFoundError, ValidationError } from "../utils/errors";
 import { connection } from "../utils/solanaConnection";
+import BlockHashModel from "../models/blockHash";
 
 export const search = async (req: Request, res: Response, next: NextFunction) => {
     const { query } = req.params;
@@ -41,6 +42,17 @@ export const search = async (req: Request, res: Response, next: NextFunction) =>
             }
         } catch (error: any) {
             console.error("Error fetching address info:", error);
+        }
+
+        try {
+            const blockHashDocument = await BlockHashModel.findOne({ blockhash: query });
+            if (blockHashDocument) {
+                const blockInfo = await findOrCreateBlockBySlot(connection, blockHashDocument.slot);
+                res.json({ type: "block", data: blockInfo });
+                return;
+            }
+        } catch (error: any) {
+            console.error("Error fetching block by hash:", error);
         }
 
         next(new NotFoundError("Block, transaction, or address not found"));
