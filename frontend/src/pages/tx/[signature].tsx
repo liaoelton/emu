@@ -1,5 +1,6 @@
 import TxInfo from "@/components/tx/TxInfo";
 import TxInstructions from "@/components/tx/TxInstructions";
+import TxLogs from "@/components/tx/TxLogs";
 import { Transaction } from "@/types/Transaction";
 import { parseTransaction } from "@/utils/parsing";
 import { Flex, Grid, Text } from "@mantine/core";
@@ -14,6 +15,7 @@ const Tx = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [ixs, setIxs] = useState<any[]>([]);
+    const [programs, setPrograms] = useState<any>({});
 
     useEffect(() => {
         const fetchDecodedData = async () => {
@@ -22,6 +24,7 @@ const Tx = () => {
                 const accountKeys = transaction.transaction.message.accountKeys;
                 let ixIndex = 0;
                 let ixs: any[] = [];
+                let programs = {};
                 for (const instruction of transaction.transaction.message.instructions) {
                     const parsedResult = await parseTransaction(
                         accountKeys[instruction.programIdIndex],
@@ -33,6 +36,10 @@ const Tx = () => {
                         SFMIdlItem = parsedResult.SFMIdlItem;
                         decodedData = parsedResult.decodedData;
                     }
+                    programs = {
+                        ...programs,
+                        [SFMIdlItem?.programId as string]: SFMIdlItem?.idl.name as string
+                    };
                     decodedData = {
                         ...decodedData,
                         index: ixIndex,
@@ -67,6 +74,10 @@ const Tx = () => {
                                         name: innerDecodedData?.name,
                                         innerSFMIdlItem,
                                     });
+                                    programs = {
+                                        ...programs,
+                                        [innerSFMIdlItem?.programId as string]: innerSFMIdlItem?.idl.name as string,
+                                    };
                                 }
                             }
                         }
@@ -79,6 +90,7 @@ const Tx = () => {
                     ixIndex++;
                 }
                 setIxs(ixs);
+                setPrograms(programs);
             } catch (error) {
                 console.error("Failed to parse transaction:", error);
             }
@@ -131,6 +143,7 @@ const Tx = () => {
                     <>
                         <TxInfo signature={signature} transaction={transaction} />
                         <TxInstructions ixs={ixs} />
+                        <TxLogs logs={transaction.meta.logMessages} programs={programs}/>
                     </>
                 )}
             </Grid>
