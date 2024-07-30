@@ -21,7 +21,7 @@ export const useBlock = (slot: number | null) => {
 
         while (attempts < maxRetries) {
             try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/block/${slot}`, {
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/blocks/${slot}`, {
                     headers: { "Content-Type": "application/json" },
                 });
 

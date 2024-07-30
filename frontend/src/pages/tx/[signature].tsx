@@ -33,7 +33,7 @@ const Tx = () => {
         if (signature) {
             const fetchBlockDetails = async () => {
                 try {
-                    const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/tx/${signature}`, {
+                    const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/txs/${signature}`, {
                         headers: { "Content-Type": "application/json" },
                     });
                     const data: Transaction = response.data;

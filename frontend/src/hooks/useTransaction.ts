@@ -13,7 +13,7 @@ export const useTransaction = (signature: string | null) => {
 
         while (attempts < maxRetries) {
             try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/tx/${signature}`, {
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/txs/${signature}`, {
                     headers: { "Content-Type": "application/json" },
                 });
 
