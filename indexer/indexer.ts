@@ -2,14 +2,11 @@ import { Connection } from "@solana/web3.js";
 import "dotenv/config";
 import mongoose from "mongoose";
 
-const blockHashSchema = new mongoose.Schema(
-    {
-        slot: Number,
-        blockhash: String,
-        parentSlot: Number,
-    },
-    { timestamps: true }
-);
+const blockHashSchema = new mongoose.Schema({
+    slot: Number,
+    blockhash: String,
+    parentSlot: Number,
+});
 
 const BlockHashModel = mongoose.model("BlockHash", blockHashSchema);
 
