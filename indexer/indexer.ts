@@ -40,11 +40,27 @@ async function fetchAndStoreSlotBlockhash(startSlot?: number) {
                     continue;
                 }
             }
-            const block = await connection.getBlock(slot, {
-                transactionDetails: "none",
-                maxSupportedTransactionVersion: 0,
-                rewards: false,
-            });
+            let block;
+            let attempts = 0;
+            const maxAttempts = 5;
+
+            while (attempts < maxAttempts) {
+                try {
+                    block = await connection.getBlock(slot, {
+                        transactionDetails: "none",
+                        maxSupportedTransactionVersion: 0,
+                        rewards: false,
+                    });
+                    if (block) break;
+                } catch (error) {
+                    console.error(`Attempt ${attempts + 1} failed:`, error);
+                }
+                attempts++;
+                if (attempts < maxAttempts) {
+                    console.log(`Retrying... (${attempts + 1}/${maxAttempts})`);
+                }
+            }
+
             if (!block) {
                 console.log(`No block found for slot ${slot}`);
                 break;
@@ -69,13 +85,8 @@ async function fetchAndStoreSlotBlockhash(startSlot?: number) {
 }
 
 async function startIndexer(startSlot?: number) {
-    console.log(process.env);
-    connect_to_db().then(() => {
-        fetchAndStoreSlotBlockhash(startSlot);
-    });
+    await connect_to_db();
+    await fetchAndStoreSlotBlockhash(startSlot);
 }
 
-const args = process.argv.slice(2);
-const startSlot = args.length > 0 ? parseInt(args[0], 10) : undefined;
-
-startIndexer(startSlot);
+startIndexer();
