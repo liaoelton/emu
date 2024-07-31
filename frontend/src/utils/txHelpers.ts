@@ -40,15 +40,15 @@ export const getTxInstructions = async (
             const SFMIdlItem = parsedResult?.SFMIdlItem || null;
             const decodedData = parsedResult?.decodedData || null;
 
-            if (SFMIdlItem) {
-                programs[SFMIdlItem.programId] = SFMIdlItem.idl.name;
+            if (SFMIdlItem && typeof SFMIdlItem.idl !== "string") {
+                programs[SFMIdlItem.programId] = (SFMIdlItem.idl as any).name;
             }
 
             const instructionData = {
                 ...decodedData,
                 index: ixIndex,
                 accounts: instruction.accounts.map((accountIndex: number) => accountKeys[accountIndex]),
-                idl_name: SFMIdlItem?.idl.name,
+                idl_name: (SFMIdlItem?.idl as any).name,
                 idl_program_id: SFMIdlItem?.programId,
             };
 
@@ -64,12 +64,12 @@ export const getTxInstructions = async (
                             const innerDecodedData = innerParsedResult?.decodedData || null;
 
                             if (innerSFMIdlItem) {
-                                programs[innerSFMIdlItem.programId] = innerSFMIdlItem.idl.name;
+                                programs[innerSFMIdlItem.programId] = (innerSFMIdlItem.idl as any).name;
                             }
 
                             return {
                                 ...innerDecodedData,
-                                idl_name: innerSFMIdlItem?.idl.name,
+                                idl_name: (innerSFMIdlItem?.idl as any).name,
                                 idl_program_id: innerSFMIdlItem?.programId,
                                 accounts: inner_ix.accounts.map((accountIndex: number) => accountKeys[accountIndex]),
                             };
