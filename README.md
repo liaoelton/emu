@@ -1,7 +1,7 @@
 # EmuScan - Small explorer for Solana
 
 <div align="center">
-    <img src="./emu.png" alt="EmuScan Logo" width="200" style="border-radius: 50%;" />
+    <img src="./frontend/public/emu.png" alt="EmuScan Logo" width="200" style="border-radius: 50%;" />
 </div>
 
 ## Completed Features
