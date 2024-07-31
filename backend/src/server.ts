@@ -19,6 +19,10 @@ app.use("/blocks", blockRoutes);
 app.use("/txs", transactionRoutes);
 app.use("/search", searchRoutes);
 
+app.get("/healthz", (req, res) => {
+    res.status(200).json({ status: "healthy", message: "I am happy and healthy" });
+});
+
 app.use(errorHandler);
 
 connect_to_db().then(() =>

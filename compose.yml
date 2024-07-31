@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+        ports:
+            - "3001:3001"
+        environment:
+            NODE_ENV: production
+        env_file:
+            - ./backend/.env
+        volumes:
+            - ./backend:/code
+        healthcheck:
+            test: ["CMD", "node", "dist/src/healthcheck.js"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+
+    backend-dev:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.dev
+        ports:
+            - "3001:3001"
+            - "9229:9229"
+            - "9230:9230"
+        environment:
+            NODE_ENV: development
+        env_file:
+            - ./backend/.env
+        volumes:
+            - ./backend:/code
+        command: ["yarn", "dev"]
+
+    frontend-dev:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile.dev
+        ports:
+            - "3000:3000"
+        environment:
+            NODE_ENV: development
+        env_file:
+            - ./frontend/.env
+        volumes:
+            - ./frontend:/code
+        command: ["yarn", "dev"]
+
+
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        ports:
+            - "3000:3000"
+        environment:
+            NODE_ENV: production
+        env_file:
+            - ./frontend/.env
+        volumes:
+            - ./frontend:/app
