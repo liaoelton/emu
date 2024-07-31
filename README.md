@@ -24,6 +24,7 @@
 -   Containerize
 -   Testing
 -   Docker compose
+-   Rate limiting
 -   Set up configuration options using environment variables
 -   Deployed on Vercel (https://emu-ugq2.vercel.app/)
 
@@ -38,7 +39,7 @@
     -   `/txs/:signature`: Fetches transaction data for a specific `signature`.
     -   `/slot`: Fetches the current slot number from the Solana blockchain.
     -   `/search/:query`: Performs a search based on the provided query, query could be `slot number`, `tx signature`, or `block hash` and returns the results.
--   Database Integration: Utilizes MongoDB for storing already queried block and transaction data efficiently.
+-   Database Integration: Utilizes MongoDB for storing already queried block and transaction data, which is used to reduce the calls to the Solana RPC API.
 -   Error Handling: Use error handling middleware for managing API errors gracefully.
 -   Health Check: An endpoint for checking the health status of the backend service.
 -   Containerization: Containerized using Docker.
@@ -49,13 +50,14 @@
     -   `cors`: To enable Cross-Origin Resource Sharing (CORS) for the API.
     -   `jest`: For testing the API endpoints.
     -   `axios`: For making HTTP requests.
+    -   `express-rate-limit`: To rate limit API requests.
 
 ### Frontend (Next.js)
 
--   Pages: Built with Next.js, offering a responsive and interactive user interface.
-    -   `/`: Show current slot info a list of recent blocks.
-    -   `/block/:slot`: Show block info for a specific slot.
-    -   `/tx/:signature`: Show transaction info for a specific signature.
+-   Pages:
+    -   `/`: Show current slot info a list of recent blocks (with a load more button to fetch more blocks).
+    -   `/block/:slot`: Show block info for a specific slot and its transactions with pagination.
+    -   `/tx/:signature`: Show transaction info for a specific signature and its accounts, instructions, and logs.
 -   Containerization: Containerized using Docker.
 -   Packages:
     -   `mantine`: UI library for React.
