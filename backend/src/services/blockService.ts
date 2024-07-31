@@ -2,6 +2,19 @@ import { Connection } from "@solana/web3.js";
 import Block, { IBlock } from "../models/block";
 import { ExtendedBlockResponse } from "../types/solanaTypes";
 
+export const fetchBlockWithRetries = async (blockSlot: number, connection: Connection, retries = 3) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const block = await findOrCreateBlockBySlot(connection, blockSlot);
+            return block;
+        } catch (error) {
+            console.error(`Attempt ${attempt} failed to fetch or save block info for slot ${blockSlot}:`, error);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            if (attempt === retries) throw error;
+        }
+    }
+};
+
 export const formatBlockResponse = (block: IBlock) => {
     const { blockHeight, blockTime, blockhash, parentSlot, slot, tx_sigs } = block;
     return {
