@@ -2,7 +2,7 @@ import { Connection } from "@solana/web3.js";
 import Block, { IBlock } from "../models/block";
 import { ExtendedBlockResponse } from "../types/solanaTypes";
 
-export const retryFetchBlock = async (blockSlot: number, connection: Connection, retries = 3) => {
+export const fetchBlockWithRetries = async (blockSlot: number, connection: Connection, retries = 3) => {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             const block = await findOrCreateBlockBySlot(connection, blockSlot);

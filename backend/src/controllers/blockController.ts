@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { formatBlockResponse, retryFetchBlock } from "../services/blockService";
+import { fetchBlockWithRetries, formatBlockResponse } from "../services/blockService";
 import { ValidationError } from "../utils/errors";
 import { connection } from "../utils/solanaConnection";
 
@@ -9,7 +9,7 @@ export const getBlock = async (req: Request, res: Response, next: NextFunction) 
         if (isNaN(slot)) {
             throw new ValidationError("Slot must be a number");
         }
-        const block = await retryFetchBlock(slot, connection);
+        const block = await fetchBlockWithRetries(slot, connection);
         res.json(block);
     } catch (error: any) {
         console.error("Failed to fetch or save block info:", error);
@@ -38,7 +38,7 @@ export const getBlocks = async (req: Request, res: Response, next: NextFunction)
         const detailedBlocks = await Promise.all(
             blocks.slice(-(blockLimit + 1)).map(async (blockSlot) => {
                 try {
-                    const block = await retryFetchBlock(blockSlot, connection);
+                    const block = await fetchBlockWithRetries(blockSlot, connection);
                     return block;
                 } catch (error) {
                     console.error(`Failed to fetch or save block info for slot ${blockSlot}:`, error);
