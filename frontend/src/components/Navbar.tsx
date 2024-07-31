@@ -1,4 +1,5 @@
-import { Button, Flex, Group, TextInput } from "@mantine/core";
+import { Avatar, Button, Flex, Group, TextInput, Title } from "@mantine/core";
+import { useWindowEvent } from "@mantine/hooks";
 import { useState } from "react";
 
 const NavBar = () => {
@@ -28,13 +29,26 @@ const NavBar = () => {
         } catch (error: any) {
             setLoading(false);
             setError(error.message);
+            window.alert("Please enter a valid slot number, signature, or indexed blockHash.");
+            setSearchQuery("");
             console.error("Error during search:", error);
         }
     };
 
+    const handleKeyPress = (event: KeyboardEvent) => {
+        if (event.key === "Enter" && searchQuery.trim() !== "") {
+            handleSearch();
+        }
+    };
+
+    useWindowEvent("keydown", handleKeyPress);
+
     return (
         <Flex mih={60} w="100vw" p="xs" align="center" justify="space-between">
-            <div>EmuScan</div>
+            <Flex align="center" gap="xs" component="a" href="/">
+                <Avatar src="/emu.png" />
+                <Title order={2}>EmuScan</Title>
+            </Flex>
             <Group>
                 <TextInput
                     placeholder="Search tx or block..."
