@@ -14,8 +14,8 @@ export const sortData = <T extends { slot?: number }>(data: T[], sortConfig: Sor
         if (aValue > bValue) {
             return sortConfig.direction === "ascending" ? 1 : -1;
         }
-        if (sortConfig.key === "slot") {
-            return (a.slot ?? 0) - (b.slot ?? 0);
+        if (sortConfig.key !== "slot") {
+            return sortConfig.direction === "ascending" ? -1 : 1;
         }
         return 0;
     });

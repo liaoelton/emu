@@ -1,9 +1,7 @@
 import { useBlock } from "@/hooks/useBlock";
-import { useSlot } from "@/hooks/useSlot";
 import { Card, ColorSwatch, Flex, Grid, Text } from "@mantine/core";
 
-const CurrentBlockStatus = () => {
-    const { slot, loading, error } = useSlot();
+const CurrentBlockStatus = ({ slot }: { slot: number | null }) => {
     const { block, loading: blockLoading, error: blockError } = useBlock(slot);
     return (
         <Flex w="100%" direction="column" gap="md" mb="xl">
@@ -13,7 +11,7 @@ const CurrentBlockStatus = () => {
                 </Text>
                 {blockLoading ? (
                     <ColorSwatch color="yellow" size={14} />
-                ) : error ? (
+                ) : blockError ? (
                     <ColorSwatch color="red" size={14} />
                 ) : (
                     <ColorSwatch color="green" size={14} />

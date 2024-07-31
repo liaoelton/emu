@@ -4,7 +4,7 @@ import { Button, Flex, Table, Text } from "@mantine/core";
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-const RecentBlockList = () => {
+const RecentBlockList = ({ startSlot, renewStartSlot }: { startSlot: number | null; renewStartSlot: () => void }) => {
     const [blocks, setBlocks] = useState<Block[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -42,22 +42,9 @@ const RecentBlockList = () => {
         }
     }, [blocks]);
 
-    const fetchInitialBlocks = async () => {
-        try {
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/slot`, {
-                headers: { "Content-Type": "application/json" },
-            });
-            const slotData: number = response.data.slot;
-            fetchBlocks(slotData);
-            setSlot(slotData);
-        } catch (error: any) {
-            console.error("Error fetching initial blocks:", error);
-        }
-    };
-
     useEffect(() => {
-        if (blocks.length === 0 && slot == null) fetchInitialBlocks();
-    }, []);
+        if (startSlot) fetchBlocks(startSlot);
+    }, [startSlot]);
 
     const sortedBlocks = useMemo(() => sortData(blocks, sortConfig), [blocks, sortConfig]);
     const requestSort = createSortHandler(setSortConfig);
@@ -66,16 +53,35 @@ const RecentBlockList = () => {
         <Flex w="100%" direction="column" gap="md">
             <Flex align="baseline" gap="md">
                 <Text size="xl" fw={700} mb="md">
-                    Recent Blocks
+                    Recent Blocks of Slot {startSlot}
                 </Text>
+                <Button
+                    onClick={() => {
+                        setBlocks([]);
+                        renewStartSlot();
+                    }}
+                >
+                    Refresh
+                </Button>
             </Flex>
-            <Table>
+            <Table styles={{td:{minWidth:"160px"}}}>
                 <Table.Thead>
                     <Table.Tr>
-                        <Table.Th onClick={() => requestSort("slot")}>Slot</Table.Th>
-                        <Table.Th onClick={() => requestSort("blockHeight")}>Block Height</Table.Th>
-                        <Table.Th onClick={() => requestSort("blockTime")}>Block Time</Table.Th>
-                        <Table.Th onClick={() => requestSort("blockhash")}>Block Hash</Table.Th>
+                        <Table.Th onClick={() => requestSort("slot")}>
+                            Slot {sortConfig?.key === "slot" && (sortConfig.direction === "ascending" ? "↑" : "↓")}
+                        </Table.Th>
+                        <Table.Th onClick={() => requestSort("blockHeight")}>
+                            Block Height{" "}
+                            {sortConfig?.key === "blockHeight" && (sortConfig.direction === "ascending" ? "↑" : "↓")}
+                        </Table.Th>
+                        <Table.Th onClick={() => requestSort("blockTime")}>
+                            Block Time{" "}
+                            {sortConfig?.key === "blockTime" && (sortConfig.direction === "ascending" ? "↑" : "↓")}
+                        </Table.Th>
+                        <Table.Th onClick={() => requestSort("blockhash")}>
+                            Block Hash{" "}
+                            {sortConfig?.key === "blockhash" && (sortConfig.direction === "ascending" ? "↑" : "↓")}
+                        </Table.Th>
                     </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
