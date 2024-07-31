@@ -27,7 +27,8 @@
 -   Rate limiting
 -   Set up configuration options using environment variables
 -   Deployed on Vercel (https://emu-ugq2.vercel.app/)
-
+    -   Note: The `/blocks` endpoints might return a 504 error if the request takes longer than 10 seconds due to Vercel's free plan timeout. (Todo: Deploy on GCP Cloud Run, but currently facing issues with its payment system)
+    -   Note: The db supports the blockHashes search from slot `280766471` to `280763534`.
 ## Architecture
 
 ### Backend (Express.js)
@@ -71,6 +72,19 @@
 -   Index through Alchemy's Solana RPC API and store the block slot-blockHash mapping in MongoDB.
 
 ## Usage
+
+### Environment Variables
+
+```bash
+# Frontend
+NEXT_PUBLIC_BACKEND_URL=<BACKEND_URL>
+# Backend
+MONGO_URL=<MONGO_URL>
+ALCHEMY_API_KEY=<ALCHEMY_API_KEY>
+# Indexer
+MONGO_URL=<MONGO_URL>
+ALCHEMY_API_KEY=<ALCHEMY_API_KEY>
+```
 
 ### Installation
 
