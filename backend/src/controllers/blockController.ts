@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { fetchBlockWithRetries, formatBlockResponse } from "../services/blockService";
+import { fetchBlockWithRetries } from "../services/blockService";
 import { ValidationError } from "../utils/errors";
 import { connection } from "../utils/solanaConnection";
 
@@ -46,8 +46,7 @@ export const getBlocks = async (req: Request, res: Response, next: NextFunction)
                 }
             })
         ).then((results) => results.filter((block) => block !== null));
-
-        const formattedBlocks = detailedBlocks.slice(-blockLimit).map(formatBlockResponse);
+        const formattedBlocks = detailedBlocks.slice(-blockLimit);
         res.json(formattedBlocks);
     } catch (error: any) {
         console.error("Failed to fetch blocks:", error);

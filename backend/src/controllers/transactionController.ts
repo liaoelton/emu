@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { findOrCreateBlockBySlot } from "../services/blockService";
+import { fetchBlockWithRetries } from "../services/blockService";
 import { findOrCreateTransactionBySignature } from "../services/txService";
 import { ValidationError } from "../utils/errors";
 import { connection } from "../utils/solanaConnection";
@@ -30,7 +30,7 @@ export const getTransactions = async (req: Request, res: Response, next: NextFun
             throw new ValidationError("Block slot, page, and limit must be valid positive numbers");
         }
 
-        const blockInfo = await findOrCreateBlockBySlot(connection, blockSlot);
+        const blockInfo = await fetchBlockWithRetries(blockSlot, connection);
         const txs = blockInfo?.tx_sigs || [];
         const totalTxs = txs.length;
         const totalPages = Math.ceil(totalTxs / limitNumber);
