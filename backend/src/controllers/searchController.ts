@@ -1,10 +1,10 @@
 import { PublicKey } from "@solana/web3.js";
 import { NextFunction, Request, Response } from "express";
-import { findOrCreateBlockBySlot } from "../services/blockService";
+import BlockHashModel from "../models/blockHash";
+import { fetchBlockWithRetries } from "../services/blockService";
 import { findOrCreateTransactionBySignature } from "../services/txService";
 import { NotFoundError, ValidationError } from "../utils/errors";
 import { connection } from "../utils/solanaConnection";
-import BlockHashModel from "../models/blockHash";
 
 export const search = async (req: Request, res: Response, next: NextFunction) => {
     const { query } = req.params;
@@ -13,7 +13,7 @@ export const search = async (req: Request, res: Response, next: NextFunction) =>
     if (/^\d+$/.test(query)) {
         try {
             // TODO: Handle unconfirmed blocks
-            const blockInfo = await findOrCreateBlockBySlot(connection, slot);
+            const blockInfo = await fetchBlockWithRetries(slot, connection);
             res.json({ type: "block", data: blockInfo });
         } catch (error: any) {
             console.error("Error fetching block:", error);
@@ -47,7 +47,7 @@ export const search = async (req: Request, res: Response, next: NextFunction) =>
         try {
             const blockHashDocument = await BlockHashModel.findOne({ blockhash: query });
             if (blockHashDocument) {
-                const blockInfo = await findOrCreateBlockBySlot(connection, blockHashDocument.slot);
+                const blockInfo = await fetchBlockWithRetries(blockHashDocument.slot, connection);
                 res.json({ type: "block", data: blockInfo });
                 return;
             }
