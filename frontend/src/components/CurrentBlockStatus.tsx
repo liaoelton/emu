@@ -1,5 +1,6 @@
 import { useBlock } from "@/hooks/useBlock";
 import { Card, ColorSwatch, Flex, Grid, Text } from "@mantine/core";
+import { BlockTxLink } from "./BlockTxLink";
 
 const CurrentBlockStatus = ({ slot }: { slot: number | null }) => {
     const { block, loading: blockLoading, error: blockError } = useBlock(slot);
@@ -22,7 +23,9 @@ const CurrentBlockStatus = ({ slot }: { slot: number | null }) => {
                     <>
                         <Grid.Col span={12}>
                             <Card shadow="sm" p="md" radius="md" withBorder>
-                                <Text size="sm">Slot: {block.slot}</Text>
+                                <Text size="sm">
+                                    Slot: <BlockTxLink type="block">{block.slot}</BlockTxLink>
+                                </Text>
                             </Card>
                         </Grid.Col>
                         <Grid.Col span={12}>
@@ -37,7 +40,9 @@ const CurrentBlockStatus = ({ slot }: { slot: number | null }) => {
                         </Grid.Col>
                         <Grid.Col span={12}>
                             <Card shadow="sm" p="md" radius="md" withBorder>
-                                <Text size="sm">Parent Slot: {block.parentSlot}</Text>
+                                <Text size="sm">
+                                    Parent Slot: <BlockTxLink type="block">{block.parentSlot}</BlockTxLink>
+                                </Text>
                             </Card>
                         </Grid.Col>
                     </>

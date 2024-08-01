@@ -4,6 +4,7 @@ import { Button, Flex, LoadingOverlay, Table, Text } from "@mantine/core";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { BlockTxLink } from "../BlockTxLink";
 
 const BlockTxs = () => {
     const router = useRouter();
@@ -13,7 +14,7 @@ const BlockTxs = () => {
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState<number>(1);
     const [totalPages, setTotalPages] = useState<number>(1);
-    const [sortConfig, setSortConfig] = useState<SortConfig<any> | null>(null);
+    const [sortConfig, setSortConfig] = useState<SortConfig<any> | null>({ key: "index", direction: "ascending" });
 
     const fetchTransactions = useCallback(async (slot: number | null, page: number) => {
         if (!slot) return;
@@ -57,14 +58,26 @@ const BlockTxs = () => {
                     Transactions
                 </Text>
             </Flex>
-            <Table>
+            <Table styles={{ td: { minWidth: "100px" } }}>
                 <Table.Thead>
                     <Table.Tr>
-                        <Table.Th onClick={() => requestSort("index")}>Index</Table.Th>
-                        <Table.Th onClick={() => requestSort("txStatus")}>Status</Table.Th>
-                        <Table.Th onClick={() => requestSort("sig")}>Signature</Table.Th>
-                        <Table.Th onClick={() => requestSort("blockTime")}>Block Time</Table.Th>
-                        <Table.Th onClick={() => requestSort("meta")}>Fee</Table.Th>
+                        <Table.Th onClick={() => requestSort("index")}>
+                            Index {sortConfig?.key === "index" && (sortConfig.direction === "ascending" ? "↑" : "↓")}
+                        </Table.Th>
+                        <Table.Th onClick={() => requestSort("txStatus")}>
+                            Status{" "}
+                            {sortConfig?.key === "txStatus" && (sortConfig.direction === "ascending" ? "↑" : "↓")}
+                        </Table.Th>
+                        <Table.Th onClick={() => requestSort("sig")}>
+                            Signature {sortConfig?.key === "sig" && (sortConfig.direction === "ascending" ? "↑" : "↓")}
+                        </Table.Th>
+                        <Table.Th onClick={() => requestSort("blockTime")}>
+                            Block Time{" "}
+                            {sortConfig?.key === "blockTime" && (sortConfig.direction === "ascending" ? "↑" : "↓")}
+                        </Table.Th>
+                        <Table.Th onClick={() => requestSort("meta")}>
+                            Fee {sortConfig?.key === "meta" && (sortConfig.direction === "ascending" ? "↑" : "↓")}
+                        </Table.Th>
                     </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -75,7 +88,9 @@ const BlockTxs = () => {
                             <Table.Tr key={transaction.signature}>
                                 <Table.Td>{transaction.index}</Table.Td>
                                 <Table.Td>{transaction.txStatus}</Table.Td>
-                                <Table.Td>{transaction.sig}</Table.Td>
+                                <Table.Td>
+                                    <BlockTxLink type="tx">{transaction.sig}</BlockTxLink>
+                                </Table.Td>
                                 <Table.Td>{transaction.blockTime}</Table.Td>
                                 <Table.Td>{transaction.meta.fee / 10 ** 9}</Table.Td>
                             </Table.Tr>

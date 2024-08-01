@@ -21,7 +21,7 @@ const TxInfo = (props: any) => {
             </Grid.Col>
             <Grid.Col span={12}>
                 <Card shadow="sm" p="md" radius="md" withBorder>
-                    <Text size="sm">Fee: {transaction.meta.fee}</Text>
+                    <Text size="sm">Fee: {transaction.meta.fee / 10 ** 9}</Text>
                 </Card>
             </Grid.Col>
             <Grid.Col span={12}>
