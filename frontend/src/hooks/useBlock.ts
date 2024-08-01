@@ -50,6 +50,7 @@ export const useBlock = (slot: number | null) => {
                 const blockData = await getBlock(slot);
                 setBlock(blockData);
                 setLoading(false);
+                setError(null);
             } catch (err: any) {
                 setError(err.message);
                 setLoading(false);

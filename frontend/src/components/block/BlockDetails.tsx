@@ -3,6 +3,7 @@ import { Card, Flex, Grid, Text } from "@mantine/core";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { BlockTxLink } from "../BlockTxLink";
 
 const BlockDetails = () => {
     const router = useRouter();
@@ -54,7 +55,9 @@ const BlockDetails = () => {
                 <Grid className="dashboard-cards">
                     <Grid.Col span={12}>
                         <Card shadow="sm" p="md" radius="md" withBorder>
-                            <Text size="sm">Slot: {block.slot}</Text>
+                            <Text size="sm">
+                                Slot: <BlockTxLink type="block">{block.slot}</BlockTxLink>
+                            </Text>
                         </Card>
                     </Grid.Col>
                     <Grid.Col span={12}>
@@ -74,13 +77,15 @@ const BlockDetails = () => {
                     </Grid.Col>
                     <Grid.Col span={12}>
                         <Card shadow="sm" p="md" radius="md" withBorder>
-                            <Text size="sm">Parent Slot: {block.parentSlot}</Text>
+                            <Text size="sm">
+                                Parent Slot: <BlockTxLink type="block">{block.parentSlot}</BlockTxLink>
+                            </Text>
                         </Card>
                     </Grid.Col>
                     {block.tx_sigs && (
                         <Grid.Col span={12}>
                             <Card shadow="sm" p="md" radius="md" withBorder>
-                                <Text size="sm">Transaction Signatures: {block.tx_sigs.length}</Text>
+                                <Text size="sm">Transaction Number: {block.tx_sigs.length}</Text>
                             </Card>
                         </Grid.Col>
                     )}

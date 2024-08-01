@@ -3,13 +3,14 @@ import { createSortHandler, SortConfig, sortData } from "@/utils/sorting";
 import { Button, Flex, Table, Text } from "@mantine/core";
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { BlockTxLink } from "./BlockTxLink";
 
 const RecentBlockList = ({ startSlot, renewStartSlot }: { startSlot: number | null; renewStartSlot: () => void }) => {
     const [blocks, setBlocks] = useState<Block[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [lastSlot, setLastSlot] = useState<number | null>(null);
-    const [sortConfig, setSortConfig] = useState<SortConfig<Block> | null>(null);
+    const [sortConfig, setSortConfig] = useState<SortConfig<Block> | null>({ key: "slot", direction: "descending" });
     const [slot, setSlot] = useState<number | null>(null);
 
     const fetchBlocks = useCallback(async (endSlot: number | null) => {
@@ -64,7 +65,7 @@ const RecentBlockList = ({ startSlot, renewStartSlot }: { startSlot: number | nu
                     Refresh
                 </Button>
             </Flex>
-            <Table styles={{td:{minWidth:"160px"}}}>
+            <Table styles={{ td: { minWidth: "160px" } }}>
                 <Table.Thead>
                     <Table.Tr>
                         <Table.Th onClick={() => requestSort("slot")}>
@@ -87,7 +88,9 @@ const RecentBlockList = ({ startSlot, renewStartSlot }: { startSlot: number | nu
                 <Table.Tbody>
                     {sortedBlocks.map((block) => (
                         <Table.Tr key={block.slot}>
-                            <Table.Td>{block.slot}</Table.Td>
+                            <Table.Td>
+                                <BlockTxLink type="block">{block.slot}</BlockTxLink>
+                            </Table.Td>
                             <Table.Td>{block.blockHeight}</Table.Td>
                             <Table.Td>{block.blockTime}</Table.Td>
                             <Table.Td>{block.blockhash}</Table.Td>
